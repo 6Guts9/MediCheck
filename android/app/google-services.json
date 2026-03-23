@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "974228484978",
+    "project_id": "medicheck-b9455",
+    "storage_bucket": "medicheck-b9455.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:974228484978:android:6da0b05a7fc7dceb9263eb",
+        "android_client_info": {
+          "package_name": "com.example.phapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "974228484978-8f96jr5cm6iclkv13nu9c57qege8hgqa.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxzhMeON2OYfQwExYDlT06dZimhgTvRec"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "974228484978-8f96jr5cm6iclkv13nu9c57qege8hgqa.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "974228484978-rnu2pt54kvjpagik5c9812l88udefb34.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.phapp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
