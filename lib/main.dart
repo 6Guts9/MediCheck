@@ -1,6 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'auth_services.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -71,7 +74,7 @@ class WelcomeScreen extends StatelessWidget {
                 const SizedBox(height: 15),
 
                 const Text(
-                  "Smart Choices,\nHealthier Life.",
+                  "Smart Choices,\n Healthier Life.",
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 18, color: Colors.grey),
                 ),
@@ -88,7 +91,7 @@ class WelcomeScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const RegisterScreen(),
+                          builder: (context) => const RegisterPage(),
                         ),
                       );
                     },
@@ -116,8 +119,53 @@ class WelcomeScreen extends StatelessWidget {
 }
 
 // صفحة التسجيل
-class RegisterScreen extends StatelessWidget {
-  const RegisterScreen({super.key});
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key});
+
+  @override
+  State<RegisterPage> createState() => _RegisterPageState();
+}
+
+class _RegisterPageState extends State<RegisterPage> {
+  final TextEditingController controllerFullName = TextEditingController();
+  final TextEditingController controllerEmail = TextEditingController();
+  final TextEditingController controllerPassword = TextEditingController();
+  final TextEditingController controllerConfirmPassword = TextEditingController();
+
+  final formKey = GlobalKey<FormState>();
+  String errorMessage = '';
+
+  @override
+  void dispose() {
+    controllerFullName.dispose();
+    controllerEmail.dispose();
+    controllerPassword.dispose();
+    controllerConfirmPassword.dispose();
+    super.dispose();
+  }
+
+  void register() async {
+    if (controllerPassword.text != controllerConfirmPassword.text) {
+      setState(() {
+        errorMessage = "Passwords do not match";
+      });
+      return;
+    }
+
+    try {
+      await authServices.value.creatAccount(
+        email: controllerEmail.text.trim(),
+        password: controllerPassword.text.trim(),
+      );
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        errorMessage = e.toString();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -139,68 +187,80 @@ class RegisterScreen extends StatelessWidget {
             // للسماح بالتمرير عند ظهور لوحة المفاتيح
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 80),
-              child: Column(
-                children: [
-                  const Text(
-                    "Welcome to MediCheck!",
-                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    "a step into a healthier life",
-                    style: TextStyle(color: Colors.grey),
-                  ),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  children: [
+                    const Text(
+                      "Welcome to MediCheck!",
+                      style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      "a step into a healthier life",
+                      style: TextStyle(color: Colors.grey),
+                    ),
 
-                  const SizedBox(height: 50),
+                    const SizedBox(height: 50),
 
-                  // حقول الإدخال
-                  buildTextField("Enter your full name"),
-                  buildTextField("Enter your Email"),
-                  buildTextField("Enter Password", isPassword: true),
-                  buildTextField("Confirm password", isPassword: true),
+                    // حقول الإدخال
+                    buildTextField("Enter your full name", controllerFullName),
+                    buildTextField("Enter your Email", controllerEmail),
+                    buildTextField("Enter Password", controllerPassword, isPassword: true),
+                    buildTextField("Confirm password", controllerConfirmPassword, isPassword: true),
 
-                  const SizedBox(height: 30),
-
-                  // زر التسجيل
-                  SizedBox(
-                    width: double.infinity,
-                    height: 55,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2196F3),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
+                    if (errorMessage.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: Text(
+                          errorMessage,
+                          style: const TextStyle(color: Colors.red, fontSize: 14),
+                          textAlign: TextAlign.center,
                         ),
                       ),
-                      child: const Text(
-                        "Register",
-                        style: TextStyle(color: Colors.white, fontSize: 18),
-                      ),
-                    ),
-                  ),
 
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 30),
 
-                  // نص تسجيل الدخول
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text("Already have an account ? "),
-                      GestureDetector(
-                        onTap: () =>
-                            Navigator.pop(context), // يعود للصفحة السابقة
-                        child: const Text(
-                          "Sign In",
-                          style: TextStyle(
-                            color: Colors.cyan,
-                            fontWeight: FontWeight.bold,
+                    // زر التسجيل
+                    SizedBox(
+                      width: double.infinity,
+                      height: 55,
+                      child: ElevatedButton(
+                        onPressed: register,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2196F3),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
                           ),
                         ),
+                        child: const Text(
+                          "Register",
+                          style: TextStyle(color: Colors.white, fontSize: 18),
+                        ),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // نص تسجيل الدخول
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text("Already have an account ? "),
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context), // يعود للصفحة السابقة
+                          child: const Text(
+                            "Sign In",
+                            style: TextStyle(
+                              color: Colors.cyan,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -209,11 +269,11 @@ class RegisterScreen extends StatelessWidget {
     );
   }
 
-  // دالة مساعدة لإنشاء حقول النصوص المتشابهة
-  Widget buildTextField(String hint, {bool isPassword = false}) {
+  Widget buildTextField(String hint, TextEditingController controller, {bool isPassword = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
       child: TextField(
+        controller: controller,
         obscureText: isPassword,
         decoration: InputDecoration(
           hintText: hint,
