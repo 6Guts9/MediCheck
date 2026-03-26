@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'LogInPage.dart';
+import 'AuthLayout.dart';
 import 'firebase_options.dart';
 import 'auth_services.dart';
 
@@ -21,12 +23,12 @@ class MediCheckApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'MediCheck',
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
-      home: const WelcomeScreen(),
+      home: const AuthLayout(),
     );
   }
 }
 
-// --- هنا تبدأ شاشة الترحيب ---
+// welcome screen hereee
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
@@ -157,12 +159,17 @@ class _RegisterPageState extends State<RegisterPage> {
         email: controllerEmail.text.trim(),
         password: controllerPassword.text.trim(),
       );
+      
+      await authServices.value.updateUsername(
+        username: controllerFullName.text.trim()
+      );
+
       if (mounted) {
-        Navigator.pop(context);
+        Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } on FirebaseAuthException catch (e) {
       setState(() {
-        errorMessage = e.toString();
+        errorMessage = e.message ?? e.toString();
       });
     }
   }
@@ -248,7 +255,12 @@ class _RegisterPageState extends State<RegisterPage> {
                       children: [
                         const Text("Already have an account ? "),
                         GestureDetector(
-                          onTap: () => Navigator.pop(context), // يعود للصفحة السابقة
+                          onTap: () =>Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LogInPage(),
+                            ),
+                          )  , //
                           child: const Text(
                             "Sign In",
                             style: TextStyle(
