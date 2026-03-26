@@ -41,7 +41,12 @@ class _SignInPageState extends State<LogInPage> {
         email: controllerEmail.text.trim(),
         password: controllerPassword.text.trim(),
       );
-      // Success! AuthLayout will handle the redirection.
+      
+      // If sign in is successful, we pop until the first route (AuthLayout)
+      // which will then detect the user and show HomePage.
+      if (mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
     } on FirebaseAuthException catch (e) {
       setState(() {
         errorMessage = e.message ?? "An error occurred";
