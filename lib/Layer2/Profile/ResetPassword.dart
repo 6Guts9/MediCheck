@@ -1,33 +1,40 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'auth_services.dart';
+import 'package:phapp/Authentication/auth_services.dart';
 
-class LogInPage extends StatefulWidget {
-  const LogInPage({super.key});
+class Resetpassword extends StatefulWidget {
+  final String email;
+
+  const Resetpassword({Key? key, required this.email}) : super(key: key);
 
   @override
-  State<LogInPage> createState() => _SignInPageState();
+  State<StatefulWidget> createState() {
+    return _ResetpasswordState();
+  }
 }
 
-class _SignInPageState extends State<LogInPage> {
-  final TextEditingController controllerEmail = TextEditingController();
-  final TextEditingController controllerPassword = TextEditingController();
-
-  final formKey = GlobalKey<FormState>();
+class _ResetpasswordState extends State<Resetpassword> {
+  final _formKey = GlobalKey<FormState>();
+  final emailController = TextEditingController();
   String errorMessage = '';
   bool isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    emailController.text = widget.email;
+  }
+
+  @override
   void dispose() {
-    controllerEmail.dispose();
-    controllerPassword.dispose();
+    emailController.dispose();
     super.dispose();
   }
 
-  void login() async {
-    if (controllerEmail.text.isEmpty || controllerPassword.text.isEmpty) {
+  void ResetPassowrd() async {
+    if (emailController.text.isEmpty) {
       setState(() {
-        errorMessage = "Please fill in all fields";
+        errorMessage = "Please enter your email";
       });
       return;
     }
@@ -36,17 +43,10 @@ class _SignInPageState extends State<LogInPage> {
       isLoading = true;
       errorMessage = '';
     });
+
     try {
-      await authServices.value.signIn(
-        email: controllerEmail.text.trim(),
-        password: controllerPassword.text.trim(),
-      );
-      
-      // If sign in is successful, we pop until the first route (AuthLayout)
-      // which will then detect the user and show HomePage.
-      if (mounted) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      }
+      await authServices.value.resetPassword(email: emailController.text.trim());
+      showSnackBar();
     } on FirebaseAuthException catch (e) {
       setState(() {
         errorMessage = e.message ?? "An error occurred";
@@ -58,6 +58,18 @@ class _SignInPageState extends State<LogInPage> {
         });
       }
     }
+  }
+
+  void showSnackBar() {
+    ScaffoldMessenger.of(context).clearMaterialBanners();
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      backgroundColor: Theme.of(context).colorScheme.primary,
+      content: const Text(
+        "Reset link sent! Please check your email.",
+        style: TextStyle(color: Colors.white),
+      ),
+      showCloseIcon: true,
+    ));
   }
 
   @override
@@ -76,7 +88,7 @@ class _SignInPageState extends State<LogInPage> {
             ),
           ),
 
-          // Back Arrow leading to Sign Up page
+          // Back Arrow
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.only(left: 10, top: 10),
@@ -92,26 +104,24 @@ class _SignInPageState extends State<LogInPage> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25),
                 child: Form(
-                  key: formKey,
+                  key: _formKey,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text(
-                        "Welcome Back",
+                        "Forgot Password",
                         style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 10),
                       const Text(
-                        "Log in to continue your journey",
+                        "Enter your email to receive a reset link",
+                        textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.grey, fontSize: 16),
                       ),
                       const SizedBox(height: 50),
 
                       // Email Field
-                      buildTextField("Enter your Email", controllerEmail, icon: Icons.email_outlined),
-                      
-                      // Password Field
-                      buildTextField("Enter Password", controllerPassword, isPassword: true, icon: Icons.lock_outline),
+                      buildTextField("Enter your Email", emailController, icon: Icons.email_outlined),
 
                       if (errorMessage.isNotEmpty)
                         Padding(
@@ -125,12 +135,12 @@ class _SignInPageState extends State<LogInPage> {
 
                       const SizedBox(height: 30),
 
-                      // Login Button (Blue)
+                      // Reset Button 
                       SizedBox(
                         width: double.infinity,
                         height: 55,
                         child: ElevatedButton(
-                          onPressed: isLoading ? null : login,
+                          onPressed: isLoading ? null : ResetPassowrd,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF2196F3),
                             shape: RoundedRectangleBorder(
@@ -144,29 +154,10 @@ class _SignInPageState extends State<LogInPage> {
                                   child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
                                 )
                               : const Text(
-                                  "Log In",
+                                  "Send Reset Link",
                                   style: TextStyle(color: Colors.white, fontSize: 18),
                                 ),
                         ),
-                      ),
-
-                      const SizedBox(height: 25),
-
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text("Don't have an account? "),
-                          GestureDetector(
-                            onTap: () => Navigator.pop(context),
-                            child: const Text(
-                              "Sign Up",
-                              style: TextStyle(
-                                color: Colors.cyan,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   ),
@@ -179,12 +170,11 @@ class _SignInPageState extends State<LogInPage> {
     );
   }
 
-  Widget buildTextField(String hint, TextEditingController controller, {bool isPassword = false, IconData? icon}) {
+  Widget buildTextField(String hint, TextEditingController controller, {IconData? icon}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
       child: TextField(
         controller: controller,
-        obscureText: isPassword,
         decoration: InputDecoration(
           prefixIcon: icon != null ? Icon(icon, color: Colors.grey) : null,
           hintText: hint,

@@ -2,9 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'LogInPage.dart';
-import 'AuthLayout.dart';
-import 'firebase_options.dart';
-import 'auth_services.dart';
+import '../Authentication/AuthLayout.dart';
+import '../Authentication/firebase_options.dart';
+import '../Authentication/auth_services.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -156,6 +156,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     try {
       await authServices.value.creatAccount(
+        displayName: controllerFullName.text.trim() ,
         email: controllerEmail.text.trim(),
         password: controllerPassword.text.trim(),
       );

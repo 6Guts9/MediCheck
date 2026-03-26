@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'auth_services.dart';
-import 'AppLoadingPage.dart';
-import 'HomePage.dart';
-import 'main.dart';
+import '../Layer1/AppLoadingPage.dart';
+import '../Layer2/HomePage.dart';
+import '../Layer1/main.dart';
 
 class AuthLayout extends StatelessWidget {
   const AuthLayout({
