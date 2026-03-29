@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
-import 'Profile.dart'; // 1. Import the Profile Page
+import 'Profile/Profile.dart'; // 1. Import the Profile Page
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
