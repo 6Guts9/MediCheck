@@ -2,7 +2,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart'; // Added for kDebugMode
+import 'package:flutter/foundation.dart';
 import 'LogInPage.dart';
 import '../Authentication/AuthLayout.dart';
 import '../Authentication/firebase_options.dart';
@@ -13,16 +13,6 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
-  // Use emulator ONLY in debug mode to avoid connection errors in production
-  if (kDebugMode) {
-    try {
-      FirebaseFunctions.instance.useFunctionsEmulator('10.0.2.2', 5001);
-      debugPrint("Using Firebase Functions Emulator on 10.0.2.2:5001");
-    } catch (e) {
-      debugPrint("Error connecting to emulator: $e");
-    }
-  }
 
   runApp(const MediCheckApp());
 }
