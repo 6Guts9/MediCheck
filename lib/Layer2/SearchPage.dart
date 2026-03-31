@@ -45,9 +45,8 @@ class _SearchPageState extends State<SearchPage> {
           _isLoading = false;
         });
       } else {
-        final String severity = data['severity'] ?? "UNKNOWN";
-        final String description = data['description'] ?? "No description available.";
-        
+        final String severity = (data['severity'] ?? "UNKNOWN").toString();
+        final String description = (data['description'] ?? "No description available.").toString();
         setState(() {
           _result = "Severity: ${severity.toUpperCase()}\n\n$description";
           _isLoading = false;

@@ -45,7 +45,7 @@ class _InfoPageState extends State<InfoPage> {
         'ChronicalDiseases': _chronicDiseases,
         'allergies': _allergies,
         'surgeries': _surgeries,
-        'current meds': _medications, // Space in name to match your screenshot
+        'current meds': _medications,
         'lastUpdated': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
@@ -55,7 +55,6 @@ class _InfoPageState extends State<InfoPage> {
         );
       }
     } catch (e) {
-      // This will show you exactly what the error is if it happens again
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
       );
@@ -64,7 +63,6 @@ class _InfoPageState extends State<InfoPage> {
     }
   }
 
-  // Update the load function to match the names too
   Future<void> _loadMedicalInfo() async {
     if (_uid == null) return;
     setState(() => _isLoading = true);
@@ -77,7 +75,7 @@ class _InfoPageState extends State<InfoPage> {
           _weightController.text = data['weight']?.toString() ?? '';
           _heightController.text = data['height']?.toString() ?? '';
           
-          // Normalize gender from DB (e.g. "male") to match Dropdown items (e.g. "Male")
+
           String? genderFromDb = data['gender'];
           if (genderFromDb != null) {
             String lower = genderFromDb.toLowerCase();
@@ -88,7 +86,7 @@ class _InfoPageState extends State<InfoPage> {
             } else if (lower == "other") {
               _selectedGender = "Other";
             } else {
-              _selectedGender = null; // Reset if invalid
+              _selectedGender = null;
             }
           }
 
@@ -114,7 +112,7 @@ class _InfoPageState extends State<InfoPage> {
           Positioned(
             top: -50,
             left: -50,
-            child: CircleAvatar(radius: 100, backgroundColor: Colors.green.withOpacity(0.1)),
+            child: CircleAvatar(radius: 100, backgroundColor: Colors.green.withOpacity(0.4)),
           ),
           SafeArea(
             child: _isLoading
