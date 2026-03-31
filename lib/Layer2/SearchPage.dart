@@ -1,4 +1,7 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -13,7 +16,7 @@ class _SearchPageState extends State<SearchPage> {
   String _result = "Enter drugs to check for interactions";
   bool _isLoading = false;
 
-  void _checkInteraction() {
+  Future<void> _checkInteraction() async {
     if (_drugAController.text.isEmpty || _drugBController.text.isEmpty) {
       setState(() {
         _result = "Please enter both drug names.";
@@ -26,15 +29,37 @@ class _SearchPageState extends State<SearchPage> {
       _result = "Analyzing interaction...";
     });
 
-    // Mocking a fetch for now. You can later replace this with 
-    // an HTTP call to your Firebase Cloud Function (.ts file)
-    Future.delayed(const Duration(seconds: 1), () {
-      setState(() {
-        _isLoading = false;
-        // This is where you will display the result from your database/logic
-        _result = "Checked interaction between \"${_drugAController.text}\" and \"${_drugBController.text}\".\n\nNo severe interactions found in the test database.";
+    try {
+      final HttpsCallable callable = FirebaseFunctions.instanceFor(region: 'us-central1')
+          .httpsCallable('checkInteraction');
+      final result = await callable.call({
+        'drugA': _drugAController.text,
+        'drugB': _drugBController.text,
       });
-    });
+
+      final data = result.data;
+      
+      if (data['error'] != null) {
+        setState(() {
+          _result = "Error: ${data['error']}";
+          _isLoading = false;
+        });
+      } else {
+        final String severity = data['severity'] ?? "UNKNOWN";
+        final String description = data['description'] ?? "No description available.";
+        
+        setState(() {
+          _result = "Severity: ${severity.toUpperCase()}\n\n$description";
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _result = "Failed to check interaction. Please check your internet connection and try again.";
+        _isLoading = false;
+      });
+      debugPrint("Error calling checkInteraction: $e");
+    }
   }
 
   @override
@@ -64,14 +89,12 @@ class _SearchPageState extends State<SearchPage> {
             ),
             const SizedBox(height: 40),
             
-            // Input Fields
             _buildInputField("First Medication", _drugAController),
             const SizedBox(height: 20),
             _buildInputField("Second Medication", _drugBController),
             
             const SizedBox(height: 40),
             
-            // Check Button
             SizedBox(
               width: double.infinity,
               height: 55,
@@ -89,7 +112,6 @@ class _SearchPageState extends State<SearchPage> {
             
             const SizedBox(height: 40),
             
-            // Result Display
             const Text(
               "Result",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -101,7 +123,11 @@ class _SearchPageState extends State<SearchPage> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: Colors.green.withOpacity(0.3)),
+                border: Border.all(
+                  color: _result.contains("HIGH") || _result.contains("SEVERE") 
+                    ? Colors.red.withOpacity(0.3) 
+                    : Colors.green.withOpacity(0.3)
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.05),
@@ -127,19 +153,51 @@ class _SearchPageState extends State<SearchPage> {
       children: [
         Text(label, style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black54)),
         const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            hintText: "Enter name...",
-            filled: true,
-            fillColor: Colors.white,
-            prefixIcon: const Icon(Icons.medication_rounded, color: Colors.blue),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none,
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          ),
+        Autocomplete<String>(
+          optionsBuilder: (TextEditingValue textEditingValue) async {
+            if (textEditingValue.text == '') {
+              return const Iterable<String>.empty();
+            }
+            try {
+              final response = await http.get(Uri.parse(
+                  'https://clinicaltables.nlm.nih.gov/api/rxterms/v3/search?terms=${textEditingValue.text}'));
+              if (response.statusCode == 200) {
+                final List<dynamic> data = jsonDecode(response.body);
+                if (data.length >= 2) {
+                  final List<dynamic> suggestions = data[1];
+                  return suggestions.map((dynamic item) => item.toString());
+                }
+              }
+            } catch (e) {
+              debugPrint("Error fetching suggestions: $e");
+            }
+            return const Iterable<String>.empty();
+          },
+          onSelected: (String selection) {
+            controller.text = selection;
+          },
+          fieldViewBuilder: (context, fieldController, focusNode, onFieldSubmitted) {
+            fieldController.text = controller.text;
+            fieldController.addListener(() {
+              controller.text = fieldController.text;
+            });
+
+            return TextField(
+              controller: fieldController,
+              focusNode: focusNode,
+              decoration: InputDecoration(
+                hintText: "Enter medication name...",
+                filled: true,
+                fillColor: Colors.white,
+                prefixIcon: const Icon(Icons.medication_rounded, color: Colors.blue),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              ),
+            );
+          },
         ),
       ],
     );

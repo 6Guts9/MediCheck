@@ -1,1 +1,60 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"medicheck-b9455","appId":"1:974228484978:android:6da0b05a7fc7dceb9263eb","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"medicheck-b9455","configurations":{"android":"1:974228484978:android:6da0b05a7fc7dceb9263eb","ios":"1:974228484978:ios:d130a1ab18952dda9263eb","macos":"1:974228484978:ios:d130a1ab18952dda9263eb","web":"1:974228484978:web:d90dead1b2642e6e9263eb","windows":"1:974228484978:web:8d5cace0de09c0fc9263eb"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "medicheck-b9455",
+          "appId": "1:974228484978:android:6da0b05a7fc7dceb9263eb",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "medicheck-b9455",
+          "configurations": {
+            "android": "1:974228484978:android:6da0b05a7fc7dceb9263eb",
+            "ios": "1:974228484978:ios:d130a1ab18952dda9263eb",
+            "macos": "1:974228484978:ios:d130a1ab18952dda9263eb",
+            "web": "1:974228484978:web:d90dead1b2642e6e9263eb",
+            "windows": "1:974228484978:web:8d5cace0de09c0fc9263eb"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "disallowLegacyRuntimeConfig": true,
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run lint",
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    }
+  ],
+  "emulators": {
+    "functions": {
+      "port": 5001,
+      "host": "0.0.0.0"
+    },
+    "ui": {
+      "enabled": true
+    },
+    "logging": {
+      "host": "0.0.0.0",
+      "port": 4500
+    },
+    "hub": {
+      "host": "0.0.0.0",
+      "port": 4400
+    }
+  }
+}

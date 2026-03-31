@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
-import 'Profile/Profile.dart'; // 1. Import the Profile Page
+import 'Profile/Profile.dart';
+import 'SearchPage.dart'; // 1. Import the Search Page
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -10,14 +11,13 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // 2. Track the selected index
   int _selectedIndex = 0;
 
-  // 3. Define the pages for each tab
+  // 2. Updated the pages list to include the SearchPage
   final List<Widget> _pages = [
     const Center(child: Text('Home Content', style: TextStyle(fontSize: 24))),
-    const Center(child: Text('Search Content', style: TextStyle(fontSize: 24))),
-    const ProfilePage(), // This is the polished profile page we created
+    const SearchPage(), // Integrated the drug interaction checker here
+    const ProfilePage(),
   ];
 
   @override
@@ -38,7 +38,6 @@ class _HomePageState extends State<HomePage> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 8),
             child: GNav(
-              // 4. Connect index and callback
               selectedIndex: _selectedIndex,
               onTabChange: (index) {
                 setState(() {
@@ -81,7 +80,6 @@ class _HomePageState extends State<HomePage> {
         ),
         centerTitle: true,
       ),
-      // 5. Display the selected page in the body
       body: IndexedStack(
         index: _selectedIndex,
         children: _pages,
