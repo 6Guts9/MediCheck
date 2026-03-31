@@ -38,7 +38,7 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7F6), // نفس لون خلفية الصورة
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255), // نفس لون خلفية الصورة
       body: Stack(
         children: [
           // الدوائر الزخرفية في الزاوية
@@ -58,12 +58,21 @@ class WelcomeScreen extends StatelessWidget {
               children: [
                 const Spacer(flex: 2),
 
-                // الشعار (مؤقتاً سنستخدم أيقونة حتى تضيف صورتك الخاصة)
-                const Icon(
-                  Icons.medication_liquid_rounded,
-                  size: 120,
-                  color: Colors.green,
+                // هذا الكود يوضع داخل الـ Column بدلاً من الكود القديم
+                Container(
+                  height: 200, // حددنا الارتفاع بـ 200 بكسل ليظهر بشكل متناسق
+                  width: 200, // والعرض بـ 200 بكسل
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(
+                      20,
+                    ), // حواف دائرية خفيفة
+                  ),
+                  child: Image.asset(
+                    'assets/logi.gif', // اسم ملف الـ GIF الخاص بك
+                    fit: BoxFit.contain, // يضمن بقاء أبعاد الصورة صحيحة دون قص
+                  ),
                 ),
+
 
                 const SizedBox(height: 30),
 
