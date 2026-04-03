@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../Authentication/auth_services.dart';
 
@@ -30,7 +32,6 @@ class _InfoPageState extends State<InfoPage> {
     super.initState();
     _loadMedicalInfo();
   }
-
 
   Future<void> _saveMedicalInfo() async {
     if (_uid == null) return;
@@ -74,7 +75,6 @@ class _InfoPageState extends State<InfoPage> {
           _ageController.text = data['age']?.toString() ?? '';
           _weightController.text = data['weight']?.toString() ?? '';
           _heightController.text = data['height']?.toString() ?? '';
-          
 
           String? genderFromDb = data['gender'];
           if (genderFromDb != null) {
@@ -118,76 +118,86 @@ class _InfoPageState extends State<InfoPage> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                      const Text("Medical Info", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  const Text("Keep your profile updated for better health insights.", style: TextStyle(color: Colors.grey)),
-                  const SizedBox(height: 30),
-                  _buildSectionTitle("Physical Metrics"),
-                  Row(
-                    children: [
-                      Expanded(child: _buildSmallField("Age", _ageController, "yrs")),
-                      const SizedBox(width: 10),
-                      Expanded(child: _buildGenderDropdown()),
-                    ],
-                  ),
-                  const SizedBox(height: 15),
-                  Row(
-                    children: [
-                      Expanded(child: _buildSmallField("Weight", _weightController, "kg")),
-                      const SizedBox(width: 10),
-                      Expanded(child: _buildSmallField("Height", _heightController, "cm")),
-                    ],
-                  ),
-                  const SizedBox(height: 30),
-                  _buildListSection("Chronic Diseases", _chronicDiseases, Icons.healing_outlined, (val) {
-                    setState(() => _chronicDiseases.add(val));
-                  }),
-                  const SizedBox(height: 20),
-                  _buildListSection("Allergies", _allergies, Icons.warning_amber_rounded, (val) {
-                    setState(() => _allergies.add(val));
-                  }),
-                  const SizedBox(height: 20),
-                  _buildListSection("Surgeries", _surgeries, Icons.personal_injury_outlined, (val) {
-                    setState(() => _surgeries.add(val));
-                  }),
-                  const SizedBox(height: 30),
-                  _buildSectionTitle("Current Medications"),
-                  ..._medications.asMap().entries.map((entry) {
-                    int idx = entry.key;
-                    var med = entry.value;
-                    return _buildMedicationCard(med, idx);
-                  }).toList(),
-                  _buildAddButton("Add Medication", () => _showMedicationDialog()),
-                  const SizedBox(height: 40),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 55,
-                    child: ElevatedButton(
-                      onPressed: _saveMedicalInfo,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2196F3),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                      ),
-                      child: const Text("Save Information", style: TextStyle(color: Colors.white, fontSize: 18)),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                            const Text("Medical Info", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        const Text("Keep your profile updated for better health insights.",
+                            style: TextStyle(color: Colors.grey)),
+                        const SizedBox(height: 30),
+                        _buildSectionTitle("Physical Metrics"),
+                        Row(
+                          children: [
+                            Expanded(child: _buildSmallField("Age", _ageController, "yrs")),
+                            const SizedBox(width: 10),
+                            Expanded(child: _buildGenderDropdown()),
+                          ],
+                        ),
+                        const SizedBox(height: 15),
+                        Row(
+                          children: [
+                            Expanded(child: _buildSmallField("Weight", _weightController, "kg")),
+                            const SizedBox(width: 10),
+                            Expanded(child: _buildSmallField("Height", _heightController, "cm")),
+                          ],
+                        ),
+                        const SizedBox(height: 30),
+                        _buildClinicalAutocompleteSection(
+                          "Chronic Diseases",
+                          _chronicDiseases,
+                          "https://clinicaltables.nlm.nih.gov/api/conditions/v3/search?terms=",
+                          (val) => setState(() => _chronicDiseases.add(val)),
+                        ),
+                        const SizedBox(height: 20),
+                        _buildClinicalAutocompleteSection(
+                          "Allergies",
+                          _allergies,
+                          "https://clinicaltables.nlm.nih.gov/api/rxterms/v3/search?terms=",
+                          (val) => setState(() => _allergies.add(val)),
+                        ),
+                        const SizedBox(height: 20),
+                        _buildClinicalAutocompleteSection(
+                          "Surgeries",
+                          _surgeries,
+                          "https://clinicaltables.nlm.nih.gov/api/procedures/v3/search?terms=",
+                          (val) => setState(() => _surgeries.add(val)),
+                        ),
+                        const SizedBox(height: 30),
+                        _buildSectionTitle("Current Medications"),
+                        ..._medications.asMap().entries.map((entry) {
+                          int idx = entry.key;
+                          var med = entry.value;
+                          return _buildMedicationCard(med, idx);
+                        }).toList(),
+                        _buildAddButton("Add Medication", () => _showMedicationDialog()),
+                        const SizedBox(height: 40),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 55,
+                          child: ElevatedButton(
+                            onPressed: _saveMedicalInfo,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF2196F3),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                            ),
+                            child: const Text("Save Information", style: TextStyle(color: Colors.white, fontSize: 18)),
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 40),
-                ],
-              ),
-            ),
           ),
         ],
       ),
@@ -256,21 +266,87 @@ class _InfoPageState extends State<InfoPage> {
     );
   }
 
-  Widget _buildListSection(String title, List<String> list, IconData icon, Function(String) onAdd) {
+  Widget _buildClinicalAutocompleteSection(String title, List<String> list, String apiUrl, Function(String) onAdd) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle(title),
         Wrap(
           spacing: 8,
-          children: list.map((item) => Chip(
-            label: Text(item),
-            backgroundColor: Colors.blue.withOpacity(0.1),
-            deleteIcon: const Icon(Icons.close, size: 14),
-            onDeleted: () => setState(() => list.remove(item)),
-          )).toList(),
+          children: list
+              .map((item) => Chip(
+                    label: Text(item),
+                    backgroundColor: Colors.blue.withOpacity(0.1),
+                    deleteIcon: const Icon(Icons.close, size: 14),
+                    onDeleted: () => setState(() => list.remove(item)),
+                  ))
+              .toList(),
         ),
-        _buildAddButton("Add $title", () => _showSimpleInputDialog("Add $title", onAdd)),
+        const SizedBox(height: 10),
+        Autocomplete<String>(
+          optionsBuilder: (TextEditingValue textEditingValue) async {
+            if (textEditingValue.text == '') {
+              return const Iterable<String>.empty();
+            }
+            try {
+              final response = await http.get(Uri.parse('$apiUrl${textEditingValue.text}'));
+              if (response.statusCode == 200) {
+                final List<dynamic> data = jsonDecode(response.body);
+
+                if (data.length >= 4 && data[3] != null) {
+                  final List<dynamic> matches = data[3];
+                  return matches.map((dynamic item) => item.toString());
+                }
+              }
+            } catch (e) {
+              debugPrint("Error fetching suggestions: $e");
+            }
+            return const Iterable<String>.empty();
+          },
+          onSelected: (String selection) {
+            if (!list.contains(selection)) {
+              onAdd(selection);
+            }
+          },
+          fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+            return TextField(
+              controller: controller,
+              focusNode: focusNode,
+              decoration: InputDecoration(
+                hintText: "Search $title...",
+                filled: true,
+                fillColor: Colors.white,
+                prefixIcon: const Icon(Icons.search, size: 20, color: Colors.grey),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+              ),
+            );
+          },
+          optionsViewBuilder: (context, onSelected, options) {
+            return Align(
+              alignment: Alignment.topLeft,
+              child: Material(
+                elevation: 4.0,
+                borderRadius: BorderRadius.circular(15),
+                child: Container(
+                  width: MediaQuery.of(context).size.width - 40,
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15)),
+                  child: ListView.separated(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: options.length,
+                    separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.withOpacity(0.2)),
+                    itemBuilder: (context, index) {
+                      final option = options.elementAt(index);
+                      return ListTile(title: Text(option), onTap: () => onSelected(option));
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
       ],
     );
   }
@@ -297,7 +373,8 @@ class _InfoPageState extends State<InfoPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(med['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text("${med['dosage'] ?? ''} - ${med['frequency'] ?? ''}", style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                Text("${med['dosage'] ?? ''} - ${med['frequency'] ?? ''}",
+                    style: const TextStyle(color: Colors.grey, fontSize: 12)),
               ],
             ),
           ),
@@ -310,54 +387,119 @@ class _InfoPageState extends State<InfoPage> {
     );
   }
 
-  void _showSimpleInputDialog(String title, Function(String) onAdd) {
-    final controller = TextEditingController();
+  void _showMedicationDialog() {
+    final nameController = TextEditingController();
+    final doseController = TextEditingController();
+    final freqController = TextEditingController();
+    String selectedName = "";
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(title),
-        content: TextField(controller: controller, autofocus: true, decoration: const InputDecoration(hintText: "Enter value...")),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.add_circle_outline, color: Colors.blue),
+            SizedBox(width: 10),
+            Text("Add Medication", style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(" Drug Name", style: TextStyle(fontSize: 12, color: Colors.grey)),
+              const SizedBox(height: 5),
+
+              Autocomplete<String>(
+                optionsBuilder: (TextEditingValue textEditingValue) async {
+                  if (textEditingValue.text.isEmpty) return const Iterable<String>.empty();
+                  try {
+
+                    final response = await http.get(Uri.parse(
+                        'https://clinicaltables.nlm.nih.gov/api/rxterms/v3/search?terms=${textEditingValue.text}'));
+                    if (response.statusCode == 200) {
+                      final List<dynamic> data = jsonDecode(response.body);
+
+                      if (data.length >= 2) {
+                        return List<String>.from(data[1]);
+                      }
+                    }
+                  } catch (e) {
+                    debugPrint("Autocomplete Error: $e");
+                  }
+                  return const Iterable<String>.empty();
+                },
+                onSelected: (String selection) {
+                  selectedName = selection;
+                  nameController.text = selection;
+                },
+                fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                  return TextField(
+                    controller: controller,
+                    focusNode: focusNode,
+                    decoration: _buildDialogInputDecoration("e.g., Advil", Icons.medication),
+                  );
+                },
+              ),
+              const SizedBox(height: 15),
+              const Text(" Dosage", style: TextStyle(fontSize: 12, color: Colors.grey)),
+              const SizedBox(height: 5),
+              TextField(
+                controller: doseController,
+                decoration: _buildDialogInputDecoration("e.g., 500mg", Icons.straighten),
+              ),
+              const SizedBox(height: 15),
+              const Text(" Frequency", style: TextStyle(fontSize: 12, color: Colors.grey)),
+              const SizedBox(height: 5),
+              TextField(
+                controller: freqController,
+                decoration: _buildDialogInputDecoration("e.g., Twice daily", Icons.access_time),
+              ),
+            ],
+          ),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-          ElevatedButton(onPressed: () {
-            if (controller.text.isNotEmpty) onAdd(controller.text);
-            Navigator.pop(context);
-          }, child: const Text("Add")),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              final name = nameController.text.isNotEmpty ? nameController.text : selectedName;
+              if (name.isNotEmpty) {
+                setState(() => _medications.add({
+                  'name': name,
+                  'dosage': doseController.text,
+                  'frequency': freqController.text,
+                  'rxNormId': 'N/A',
+                }));
+                Navigator.pop(context);
+              }
+            },
+            child: const Text("Add to Profile", style: TextStyle(color: Colors.white)),
+          ),
         ],
       ),
     );
   }
 
-  void _showMedicationDialog() {
-    final nameC = TextEditingController();
-    final doseC = TextEditingController();
-    final freqC = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Add Medication"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: nameC, decoration: const InputDecoration(labelText: "Drug Name")),
-            TextField(controller: doseC, decoration: const InputDecoration(labelText: "Dosage (e.g. 500mg)")),
-            TextField(controller: freqC, decoration: const InputDecoration(labelText: "Frequency (e.g. 2x Daily)")),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-          ElevatedButton(onPressed: () {
-            if (nameC.text.isNotEmpty) {
-              setState(() => _medications.add({
-                'name': nameC.text,
-                'dosage': doseC.text,
-                'frequency': freqC.text,
-                'rxNormId': 'N/A',
-              }));
-            }
-            Navigator.pop(context);
-          }, child: const Text("Add")),
-        ],
+
+  InputDecoration _buildDialogInputDecoration(String hint, IconData icon) {
+    return InputDecoration(
+      hintText: hint,
+      prefixIcon: Icon(icon, size: 20, color: Colors.blue.withOpacity(0.7)),
+      filled: true,
+      fillColor: Colors.grey[100],
+      contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
       ),
     );
   }

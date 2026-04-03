@@ -13,9 +13,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
 
-  // 2. Updated the pages list to include the SearchPage
+  // Updated the pages list to include the SearchPage and ProfilePage
   final List<Widget> _pages = [
-    const Center(child: Text('Home Content', style: TextStyle(fontSize: 24))),
     const SearchPage(), // Integrated the drug interaction checker here
     const ProfilePage(),
   ];
@@ -54,10 +53,6 @@ class _HomePageState extends State<HomePage> {
               tabBackgroundColor: const Color(0xFFE8F5E9),
               color: Colors.grey[600],
               tabs: const [
-                GButton(
-                  icon: Icons.home_rounded,
-                  text: 'Home',
-                ),
                 GButton(
                   icon: Icons.search_rounded,
                   text: 'Search',

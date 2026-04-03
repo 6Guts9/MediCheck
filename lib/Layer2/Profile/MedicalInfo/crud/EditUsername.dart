@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../../Authentication/auth_services.dart';
+import '../../../../Authentication/auth_services.dart';
 
 class EditUsernamePage extends StatefulWidget {
   const EditUsernamePage({super.key});

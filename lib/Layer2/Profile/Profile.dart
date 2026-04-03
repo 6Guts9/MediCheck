@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:phapp/Layer2/Profile/DeleteAccount.dart';
+import 'package:phapp/Layer2/Profile/MedicalInfo/crud/DeleteAccount.dart';
 import '../../Authentication/auth_services.dart';
-import 'ChangePassword.dart';
-import 'EditUsername.dart';
+import 'MedicalInfo/crud/ChangePassword.dart';
+import 'MedicalInfo/crud/EditUsername.dart';
 import 'MedicalInfo/InfoPage.dart';
 
 class ProfilePage extends StatelessWidget {

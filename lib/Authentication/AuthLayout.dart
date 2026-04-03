@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'auth_services.dart';
 import '../Layer1/AppLoadingPage.dart';
 import '../Layer2/HomePage.dart';
-import '../Layer1/main.dart';
+import '../main.dart';
 
 class AuthLayout extends StatelessWidget {
   const AuthLayout({

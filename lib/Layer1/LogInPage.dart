@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../Authentication/auth_services.dart';
-import '../Layer2/Profile/ResetPassword.dart';
+import '../Layer2/Profile/MedicalInfo/crud/ResetPassword.dart';
 
 class LogInPage extends StatefulWidget {
   const LogInPage({super.key});

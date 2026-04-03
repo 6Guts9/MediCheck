@@ -11,19 +11,21 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  final TextEditingController _drugAController = TextEditingController();
-  final TextEditingController _drugBController = TextEditingController();
-  String _result = "Enter drugs to check for interactions";
+  final List<String> _selectedDrugs = [];
+  final TextEditingController _searchController = TextEditingController();
+  String _result = "Add medications to check for interactions";
   bool _isLoading = false;
 
   Future<void> _checkInteraction() async {
-    if (_drugAController.text.isEmpty || _drugBController.text.isEmpty) {
+    // 1. Validation check
+    if (_selectedDrugs.length < 1) {
       setState(() {
-        _result = "Please enter both drug names.";
+        _result = "Please add at least one medication to check.";
       });
       return;
     }
 
+    // 2. Start Loading
     setState(() {
       _isLoading = true;
       _result = "Analyzing interaction...";
@@ -32,39 +34,44 @@ class _SearchPageState extends State<SearchPage> {
     try {
       final HttpsCallable callable = FirebaseFunctions.instanceFor(region: 'us-central1')
           .httpsCallable('checkInteraction');
+
       final result = await callable.call({
-        'drugA': _drugAController.text,
-        'drugB': _drugBController.text,
+        'drugs': _selectedDrugs,
       });
 
+      // 3. Process the Data
       final data = result.data;
-      
-      if (data['error'] != null) {
+
+      // Check if the cloud function sent an error field or a failure severity
+      if (data['error'] != null || data['severity'] == "ERROR") {
         setState(() {
-          _result = "Error: ${data['error']}";
-          _isLoading = false;
+          _result = "Error: ${data['error'] ?? data['description'] ?? 'Unknown error'}";
         });
       } else {
         final String severity = (data['severity'] ?? "UNKNOWN").toString();
         final String description = (data['description'] ?? "No description available.").toString();
+
         setState(() {
           _result = "Severity: ${severity.toUpperCase()}\n\n$description";
-          _isLoading = false;
         });
       }
     } catch (e) {
+      // 4. Handle Network/System errors
       setState(() {
-        _result = "Failed to check interaction. Please check your internet connection and try again.";
-        _isLoading = false;
+        _result = "Connection failed. Please check your internet and try again.";
       });
       debugPrint("Error calling checkInteraction: $e");
+    } finally {
+      // 5. ALWAYS re-enable the button, regardless of success or failure
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
   @override
   void dispose() {
-    _drugAController.dispose();
-    _drugBController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -83,16 +90,35 @@ class _SearchPageState extends State<SearchPage> {
             ),
             const SizedBox(height: 10),
             const Text(
-              "Check if two medications are safe to take together.",
+              "Add medications to see how they interact with each other and your profile.",
               style: TextStyle(color: Colors.grey, fontSize: 16),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 30),
+            _buildSearchField(),
             
-            _buildInputField("First Medication", _drugAController),
             const SizedBox(height: 20),
-            _buildInputField("Second Medication", _drugBController),
             
-            const SizedBox(height: 40),
+            if (_selectedDrugs.isNotEmpty) ...[
+              const Text(
+                "Selected Medications:",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                children: _selectedDrugs.map((drug) => Chip(
+                  label: Text(drug),
+                  onDeleted: () {
+                    setState(() {
+                      _selectedDrugs.remove(drug);
+                    });
+                  },
+                  backgroundColor: Colors.blue.withOpacity(0.1),
+                  deleteIcon: const Icon(Icons.close, size: 18),
+                )).toList(),
+              ),
+              const SizedBox(height: 20),
+            ],
             
             SizedBox(
               width: double.infinity,
@@ -105,14 +131,14 @@ class _SearchPageState extends State<SearchPage> {
                 ),
                 child: _isLoading 
                   ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : const Text("Check Now", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  : const Text("Check Interactions", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
               ),
             ),
             
             const SizedBox(height: 40),
             
             const Text(
-              "Result",
+              "Clinical Analysis Result",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 15),
@@ -140,17 +166,45 @@ class _SearchPageState extends State<SearchPage> {
                 style: const TextStyle(fontSize: 15, color: Colors.black87, height: 1.5),
               ),
             ),
+            const SizedBox(height: 30),
+            Container(
+              padding: const EdgeInsets.all(15),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.blue.withOpacity(0.1)),
+              ),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.info_outline, color: Colors.blue, size: 20),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      "Note: The medical names are from the FDA. The naming of the medicines is American (e.g., Acetaminophen instead of Paracetamol).",
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.black54,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildInputField(String label, TextEditingController controller) {
+  Widget _buildSearchField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black54)),
+        const Text("Search & Add Medication",
+            style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black54)),
         const SizedBox(height: 8),
         Autocomplete<String>(
           optionsBuilder: (TextEditingValue textEditingValue) async {
@@ -173,27 +227,60 @@ class _SearchPageState extends State<SearchPage> {
             return const Iterable<String>.empty();
           },
           onSelected: (String selection) {
-            controller.text = selection;
-          },
-          fieldViewBuilder: (context, fieldController, focusNode, onFieldSubmitted) {
-            fieldController.text = controller.text;
-            fieldController.addListener(() {
-              controller.text = fieldController.text;
+            setState(() {
+              if (!_selectedDrugs.contains(selection)) {
+                _selectedDrugs.add(selection);
+              }
             });
-
+          },
+          optionsViewBuilder: (context, onSelected, options) {
+            return Align(
+              alignment: Alignment.topLeft,
+              child: Material(
+                elevation: 4.0,
+                borderRadius: BorderRadius.circular(15),
+                child: Container(
+                  width: MediaQuery.of(context).size.width - 50,
+                  constraints: const BoxConstraints(maxHeight: 250),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: ListView.separated(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: options.length,
+                    separatorBuilder: (context, index) =>
+                        Divider(height: 1, color: Colors.grey.withOpacity(0.2)),
+                    itemBuilder: (BuildContext context, int index) {
+                      final String option = options.elementAt(index);
+                      return ListTile(
+                        title: Text(option),
+                        onTap: () => onSelected(option),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
+          fieldViewBuilder:
+              (context, fieldController, focusNode, onFieldSubmitted) {
             return TextField(
               controller: fieldController,
               focusNode: focusNode,
               decoration: InputDecoration(
                 hintText: "Enter medication name...",
+                prefixIcon: Icon(Icons.medication_rounded,
+                    color: Colors.blue.withOpacity(0.7), size: 20),
                 filled: true,
-                fillColor: Colors.white,
-                prefixIcon: const Icon(Icons.medication_rounded, color: Colors.blue),
+                fillColor: Colors.grey[100],
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               ),
             );
           },
